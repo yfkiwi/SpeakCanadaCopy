@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import Link from 'next/link';
 
 export default function Scenarios() {
   const [scenarios, setScenarios] = useState([]);
@@ -16,9 +17,12 @@ export default function Scenarios() {
       const { data, error } = await supabase
         .from('scenarios')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('numeric_id', { ascending: true });
 
       if (error) throw error;
+      
+      // Debug: Log the data to see what we're getting
+      console.log('Fetched scenarios:', data);
       setScenarios(data || []);
     } catch (err) {
       setError(err.message);
@@ -49,8 +53,17 @@ export default function Scenarios() {
             <tbody>
               {scenarios.map((scenario) => (
                 <tr key={scenario.id} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border">{scenario.id}</td>
-                  <td className="py-2 px-4 border">{scenario.scenario_name}</td>
+                  <td className="py-2 px-4 border">
+                    {scenario.numeric_id || scenario.id}
+                  </td>
+                  <td className="py-2 px-4 border">
+                    <Link
+                      href={`/scenario/${scenario.numeric_id || scenario.id}`} 
+                      className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                    >
+                      {scenario.title || 'No title'}
+                    </Link>
+                  </td>
                   <td className="py-2 px-4 border">
                     {new Date(scenario.created_at).toLocaleString()}
                   </td>
