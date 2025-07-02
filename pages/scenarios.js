@@ -50,7 +50,7 @@ export default function Scenarios() {
               {scenarios.map((scenario) => (
                 <tr key={scenario.id} className="hover:bg-gray-50">
                   <td className="py-2 px-4 border">{scenario.id}</td>
-                  <td className="py-2 px-4 border">{scenario.scenario_name}</td>
+                  <td className="py-2 px-4 border">{scenario.scenario_name || scenario.title}</td>
                   <td className="py-2 px-4 border">
                     {new Date(scenario.created_at).toLocaleString()}
                   </td>
