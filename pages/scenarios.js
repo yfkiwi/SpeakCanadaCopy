@@ -1,65 +1,73 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 export default function Scenarios() {
+  const router = useRouter();
   const [scenarios, setScenarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchScenarios();
-  }, []);
+    const fetchData = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.replace('/login');
+        return;
+      }
+      const { data, error } = await supabase.from('scenarios').select('*');
 
-  async function fetchScenarios() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('scenarios')
-        .select('*')
-        .order('created_at', { ascending: false });
+      console.log('Fetched scenarios data:', data);
+      console.log('Fetch error:', error);
 
-      if (error) throw error;
-      setScenarios(data || []);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching scenarios:', err);
-    } finally {
+      if (error) {
+        setError(error.message);
+        console.error(error);
+      } else {
+        setScenarios(data || []);
+      }
       setLoading(false);
-    }
-  }
+    };
+    fetchData();
+  }, [router]);
 
-  if (loading) return <div className="p-4">Loading scenarios...</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/login');
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-red-500">Error: {error}</p>;
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Scenarios</h1>
-      {scenarios.length === 0 ? (
-        <p>No scenarios found.</p>
+    <div className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl mb-4">Choose a scenario</h1>
+      {scenarios.length > 0 ? (
+        <ul>
+          {scenarios.map((s) => (
+            <li key={s.id} className="mb-2">
+              
+              <Link href={`/scenario/${s.numeric_id || s.id}`} className="text-blue-600 underline">
+                {/*
+                  We use s.title || s.scenario_name here because:
+                  - The database might have either 'title' or 'scenario_name' as the scenario name field.
+                  - Our debugging showed that sometimes the fetched data has 'scenario_name' instead of 'title'.
+                  - This ensures the scenario name is displayed regardless of which field is present.
+                */}
+                {s.title || s.scenario_name}
+              </Link>
+            </li>
+          ))}
+        </ul>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-2 px-4 border text-left">ID</th>
-                <th className="py-2 px-4 border text-left">Name</th>
-                <th className="py-2 px-4 border text-left">Created At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scenarios.map((scenario) => (
-                <tr key={scenario.id} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border">{scenario.id}</td>
-                  <td className="py-2 px-4 border">{scenario.scenario_name || scenario.title}</td>
-                  <td className="py-2 px-4 border">
-                    {new Date(scenario.created_at).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p>No scenarios found.</p>
       )}
+      <button onClick={handleLogout} className="mt-4 bg-red-500 text-white p-2 rounded">
+        Logout
+      </button>
     </div>
   );
 }

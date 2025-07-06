@@ -59,7 +59,7 @@ export default function TestAll() {
         <h2>Links</h2>
         <ul>
           <li><a href="/login" style={{ color: 'blue', textDecoration: 'underline' }}>Login Page</a></li>
-          <li><a href="/dashboard" style={{ color: 'blue', textDecoration: 'underline' }}>Dashboard</a></li>
+          <li><a href="/scenarios" style={{ color: 'blue', textDecoration: 'underline' }}>scenarios</a></li>
           <li><a href="/scenarios" style={{ color: 'blue', textDecoration: 'underline' }}>Scenarios List</a></li>
           <li><a href="/test" style={{ color: 'blue', textDecoration: 'underline' }}>Audio Test Page</a></li>
         </ul>
