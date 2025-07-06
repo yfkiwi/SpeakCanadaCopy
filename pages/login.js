@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 
 export default function Login() {
@@ -16,7 +16,7 @@ export default function Login() {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/dashboard');
+      router.push('/scenarios');
     }
   };
 
@@ -28,7 +28,7 @@ export default function Login() {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/dashboard');
+      router.push('/scenarios');
     }
   };
 
