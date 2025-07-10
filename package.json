@@ -8,8 +8,10 @@
     "start": "next start -p 3000"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@supabase/supabase-js": "^2.39.5",
     "formidable": "^3.5.4",
+    "microsoft-cognitiveservices-speech-sdk": "^1.44.1",
     "next": "14.2.3",
     "openai": "^5.7.0",
     "react": "18.2.0",
