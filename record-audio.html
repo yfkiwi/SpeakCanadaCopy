@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Record Test Audio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .recording {
+            background-color: #ff4136;
+            color: white;
+        }
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #2ecc40;
+            color: white;
+        }
+        .error {
+            background-color: #ff4136;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Record Test Audio</h1>
+    <p>Click the button below to record 3 seconds of audio for testing.</p>
+    <p>Try saying something like: "Can I get a large coffee with milk, please?"</p>
+    
+    <button id="recordButton">Record Test Audio (3s)</button>
+    <div id="status"></div>
+    
+    <script>
+        const recordButton = document.getElementById('recordButton');
+        const status = document.getElementById('status');
+        
+        let mediaRecorder;
+        let chunks = [];
+        let isRecording = false;
+        
+        recordButton.addEventListener('click', async () => {
+            if (isRecording) return;
+            
+            try {
+                status.textContent = 'Requesting microphone access...';
+                status.className = '';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                
+                chunks = [];
+                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'test-audio.webm';
+                    a.click();
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    recordButton.textContent = 'Record Test Audio (3s)';
+                    recordButton.classList.remove('recording');
+                    
+                    status.textContent = 'Recording saved as test-audio.webm';
+                    status.className = 'success';
+                    
+                    isRecording = false;
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                recordButton.textContent = 'Recording... (3s)';
+                recordButton.classList.add('recording');
+                status.textContent = 'Recording started. Speak now...';
+                
+                // Record for 3 seconds
+                setTimeout(() => {
+                    if (mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                status.textContent = `Error: ${error.message}`;
+                status.className = 'error';
+                
+                recordButton.textContent = 'Record Test Audio (3s)';
+                recordButton.classList.remove('recording');
+                isRecording = false;
+            }
+        });
+    </script>
+</body>
+</html>

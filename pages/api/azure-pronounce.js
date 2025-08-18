@@ -13,9 +13,9 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-// Personal Key 
-const speechKey = '3FGJE2IQIAVU7vgTF7QBYtSwiIM6E4OeZ2bYj4LIcpsp9nPcK4aCJQQJ99BFACREanaXJ3w3AAAYACOGmMA5';
-const serviceRegion = 'canadaeast'; // e.g., 'eastus'
+// Update below Azure Speech Key and Region into your .env.local file.
+const speechKey = process.env.AZURE_SPEECH_KEY;
+const serviceRegion = process.env.AZURE_SPEECH_REGION;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
