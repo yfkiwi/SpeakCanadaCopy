@@ -1,40 +1,88 @@
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
-import ConfidenceSurvey from '../../../components/ConfidenceSurvey';
+import ContentRatingModal from '../../../components/ContentRatingModal';
+
 
 export default function ScenarioMainPage() {
   const router = useRouter();
   const { id } = router.query;
+
+  // State declarations
   const [scenario, setScenario] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // Survey state
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [surveyType, setSurveyType] = useState('pre'); // 'pre', 'post', or 'manual'
-  const [surveyChecked, setSurveyChecked] = useState(false); // Prevent multiple survey checks
+  const [showContentRating, setShowContentRating] = useState(false);
+  const [hasRatedContent, setHasRatedContent] = useState(false);
 
+  // Derived values - moved after state declarations
+  const currentPoints = userProgress?.progress || 0;
+  const isCompleted = userProgress?.status === 'completed';
+
+  // Functions moved before useEffect
+  const checkContentRatingExists = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !scenario) return false;
+
+      const { data } = await supabase
+        .from('content_ratings')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('scenario_id', scenario.id)
+        .single();
+
+      return !!data;
+    } catch (error) {
+      return false;
+    }
+  };
+
+
+  const handleContentRatingSubmit = async (ratingData) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !scenario) return;
+
+      await supabase.from('content_ratings').insert({
+        user_id: session.user.id,
+        scenario_id: scenario.id,
+        vocabulary_rating: ratingData.ratings.vocabulary || 0,
+        expressions_rating: ratingData.ratings.expressions || 0,
+        video_rating: ratingData.ratings.video || 0,
+        roleplay_rating: ratingData.ratings.roleplay || 0,
+        quiz_rating: ratingData.ratings.quiz || 0,
+        feedback: ratingData.feedback,
+        created_at: ratingData.timestamp
+      });
+
+      setHasRatedContent(true);
+      setShowContentRating(false);
+    } catch (error) {
+      console.error('Error saving content rating:', error);
+    }
+  };
+
+  // Main data fetching effect
   useEffect(() => {
     if (!id) return;
-    
+
     const fetchData = async () => {
       try {
-        // Fetch scenario details
+        // 获取场景和用户进度数据
         const { data: scenarioData } = await supabase
           .from('scenarios')
           .select('*')
           .eq('numeric_id', id)
           .single();
-        
+
         if (!scenarioData) {
           setLoading(false);
           return;
         }
-        
+
         setScenario(scenarioData);
-        
-        // Get user session and progress
+
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const { data: progressData } = await supabase
@@ -43,16 +91,28 @@ export default function ScenarioMainPage() {
             .eq('user_id', session.user.id)
             .eq('scenario_id', scenarioData.id)
             .single();
-          
+
           setUserProgress(progressData);
-          
-          // Check if we should show a survey ONLY ONCE when page loads
-          if (!surveyChecked) {
-            await checkAndShowSurvey(session.user.id, scenarioData, progressData);
-            setSurveyChecked(true);
+
+          // check if user has rated
+          const { data: ratingData } = await supabase
+            .from('content_ratings')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .eq('scenario_id', scenarioData.id)
+            .single();
+
+          if (ratingData) {
+            setHasRatedContent(true); // user has rated, set status
+          } else {
+            // if user has not rated and points >= 8, show rating window
+            const currentPoints = progressData?.progress || 0;
+            if (currentPoints >= 8) {
+              setShowContentRating(true);
+            }
           }
         }
-        
+
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -61,87 +121,11 @@ export default function ScenarioMainPage() {
     };
 
     fetchData();
-  }, [id, surveyChecked]); // Add surveyChecked to dependencies
+  }, [id]);
 
-  // Check if we should show a survey based on current points
-  const checkAndShowSurvey = async (userId, scenarioData, progressData) => {
-    const currentPoints = progressData?.progress || 0;
-    
-    console.log('🔍 Checking survey conditions:', { currentPoints, status: progressData?.status });
-    
-    // Check for pre-survey (0 points) - ONLY when user first enters scenario
-    if (currentPoints === 0) {
-      const hasPreSurvey = await checkSurveyExists(userId, scenarioData.id, 'pre');
-      if (!hasPreSurvey) {
-        console.log('📋 Showing pre-survey for 0 points');
-        setSurveyType('pre');
-        setShowSurvey(true);
-        return;
-      }
-    }
-    
-    // Removed automatic post-survey - users can take it manually
-    console.log('✅ No automatic survey needed');
-  };
-
-  // Check if user has already taken a specific survey type
-  const checkSurveyExists = async (userId, scenarioId, surveyType) => {
-    try {
-      const { data, error } = await supabase
-        .from('survey_responses')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('scenario_id', scenarioId)
-        .eq('survey_type', surveyType)
-        .single();
-
-      // If no error and data exists, survey was taken
-      return !!data;
-    } catch (error) {
-      // If error is "no rows found", survey hasn't been taken
-      return false;
-    }
-  };
-
-  // Handle survey completion - MODIFIED to refresh progress data
-  const handleSurveyComplete = async () => {
-    setShowSurvey(false);
-    
-    // Refresh progress data to show updated points
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && scenario) {
-        const { data: progressData } = await supabase
-          .from('user_scenarios_progress')
-          .select('progress, status')
-          .eq('user_id', session.user.id)
-          .eq('scenario_id', scenario.id)
-          .single();
-        
-        setUserProgress(progressData);
-      }
-    } catch (error) {
-      console.error('Error refreshing progress:', error);
-    }
-  };
-
-  // Handle survey close (X button) - navigate back to scenarios list
-  const handleSurveyClose = () => {
-    setShowSurvey(false);
-    router.push('/scenarios'); // Go back to scenarios list
-  };
-
-  // Handle survey skip - stay on scenario page
-  const handleSurveySkip = () => {
-    setShowSurvey(false);
-    // Stay on scenario page - user skipped survey
-  };
-
+  // Loading and error states
   if (loading) return <p>Loading...</p>;
   if (!scenario) return <p>Scenario not found</p>;
-
-  const currentPoints = userProgress?.progress || 0;
-  const isCompleted = userProgress?.status === 'completed';
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -149,7 +133,7 @@ export default function ScenarioMainPage() {
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               onClick={() => router.push('/scenarios')}
               className="text-gray-600 hover:text-gray-800"
             >
@@ -162,7 +146,7 @@ export default function ScenarioMainPage() {
               <p className="text-sm text-gray-500">Choose your learning mode</p>
             </div>
           </div>
-          
+
           {/* Progress Display */}
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
@@ -170,10 +154,8 @@ export default function ScenarioMainPage() {
               <span className="text-sm font-medium text-gray-900">{currentPoints}/10 points</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  isCompleted ? 'bg-green-500' : 'bg-blue-500'
-                }`}
+              <div
+                className={`h-2 rounded-full transition-all duration-500 ${isCompleted ? 'bg-green-500' : 'bg-blue-500'}`}
                 style={{ width: `${Math.min((currentPoints / 10) * 100, 100)}%` }}
               />
             </div>
@@ -186,38 +168,23 @@ export default function ScenarioMainPage() {
 
       {/* Main Content */}
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        
-        {/* Enhanced Confidence Survey Section - Compact Version */}
-        <div className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-3 shadow-sm">
-          <div className="flex items-start space-x-2 mb-2">
-            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-            <div className="flex-1">
-              <h3 className="font-medium text-sm mb-1">Confidence Survey</h3>
-              <p className="text-xs text-blue-100 leading-relaxed">
-                📊 Take this survey for better progress tracking.
-              </p>
-            </div>
+
+        {/* Feedback Survey Section */}
+        {currentPoints >= 8 && !hasRatedContent && (
+          <div className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-3 shadow-sm">
+            <button
+              onClick={() => setShowContentRating(true)}
+              className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white border-opacity-20 text-sm"
+            >
+              <div className="flex items-center justify-between">
+                <span>Plz help us by giving us feedback</span>
+              </div>
+            </button>
           </div>
-          
-          <button 
-            onClick={() => {
-              console.log('Manual Confidence Survey button clicked!');
-              setSurveyType('manual');
-              setShowSurvey(true);
-            }}
-            className="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium py-2 px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white border-opacity-20 text-sm"
-          >
-            <div className="flex items-center justify-between">
-              <span>Take Confidence Survey</span>
-              <span className="text-xs bg-white bg-opacity-30 px-2 py-0.5 rounded-full">2 questions</span>
-            </div>
-          </button>
-        </div>
-        
+        )}
+
         {/* Video Learning Block */}
-        <button 
+        <button
           onClick={() => router.push(`/scenario/${id}/video`)}
           className="w-full bg-white rounded-2xl border-2 border-red-200 p-4 hover:border-red-300 hover:shadow-md transition-all duration-200"
         >
@@ -239,7 +206,7 @@ export default function ScenarioMainPage() {
         </button>
 
         {/* Vocabulary & Expressions Block */}
-        <button 
+        <button
           onClick={() => router.push(`/scenario/${id}/vocabulary-expressions`)}
           className="w-full bg-white rounded-2xl border-2 border-blue-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200"
         >
@@ -261,7 +228,7 @@ export default function ScenarioMainPage() {
         </button>
 
         {/* Role Play Block */}
-        <button 
+        <button
           onClick={() => router.push(`/scenario/${id}/roleplay`)}
           className="w-full bg-white rounded-2xl border-2 border-purple-200 p-4 hover:border-purple-300 hover:shadow-md transition-all duration-200"
         >
@@ -283,7 +250,7 @@ export default function ScenarioMainPage() {
         </button>
 
         {/* Overall Quiz Block */}
-        <button 
+        <button
           onClick={() => router.push(`/scenario/${id}/quiz`)}
           className="w-full bg-white rounded-2xl border-2 border-green-200 p-4 hover:border-green-300 hover:shadow-md transition-all duration-200"
         >
@@ -306,14 +273,14 @@ export default function ScenarioMainPage() {
 
       </div>
 
-      {/* Confidence Survey Modal */}
-      {showSurvey && scenario && (
-        <ConfidenceSurvey
-          scenario={scenario}
-          surveyType={surveyType}
-          onComplete={handleSurveyComplete}
-          onClose={handleSurveyClose}
-          onSkip={handleSurveySkip}
+      {/* Content Rating Modal */}
+      {showContentRating && scenario && (
+        <ContentRatingModal
+          contentType="scenario_complete"
+          scenarioTitle={scenario.title}
+          isVisible={showContentRating}
+          onClose={() => setShowContentRating(false)}
+          onSubmit={handleContentRatingSubmit}
         />
       )}
 
@@ -321,7 +288,7 @@ export default function ScenarioMainPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
         <div className="max-w-md mx-auto px-4">
           <div className="flex justify-around py-2">
-            <button 
+            <button
               onClick={() => router.push('/')}
               className="flex flex-col items-center py-2 px-3"
             >
@@ -336,7 +303,7 @@ export default function ScenarioMainPage() {
               </svg>
               <span className="text-xs text-orange-500 mt-1 font-medium">Scenario</span>
             </button>
-            <button 
+            <button
               onClick={() => router.push('/review')}
               className="flex flex-col items-center py-2 px-3"
             >
@@ -345,7 +312,7 @@ export default function ScenarioMainPage() {
               </svg>
               <span className="text-xs text-gray-400 mt-1">Review</span>
             </button>
-            <button 
+            <button
               onClick={() => router.push('/me')}
               className="flex flex-col items-center py-2 px-3"
             >

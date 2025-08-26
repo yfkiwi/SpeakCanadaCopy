@@ -12,7 +12,7 @@
     "@supabase/supabase-js": "^2.39.5",
     "formidable": "^3.5.4",
     "microsoft-cognitiveservices-speech-sdk": "^1.44.1",
-    "next": "14.2.3",
+    "next": "^14.2.31",
     "node-fetch": "^2.7.0",
     "openai": "^5.7.0",
     "react": "18.2.0",
