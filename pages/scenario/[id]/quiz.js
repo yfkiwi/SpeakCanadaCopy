@@ -16,6 +16,7 @@ export default function ScenarioQuizPage() {
   
   // Completion state
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(true);
 
   useEffect(() => {
     if (!id) return;
@@ -34,12 +35,35 @@ export default function ScenarioQuizPage() {
 
         // Generate quiz questions
         await generateQuizQuestions(scenarioData.title);
+
+        // Check if user has already completed quiz
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const { data: progress, error: progressError } = await supabase
+              .from('user_scenarios_progress')
+              .select('completed_activities')
+              .eq('user_id', session.user.id)
+              .eq('scenario_id', scenarioData.id)
+              .single();
+
+            if (!progressError && progress) {
+              const completedActivities = progress.completed_activities || {};
+              if (completedActivities['quiz_scenario_quiz']) {
+                setQuizCompleted(true);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error checking quiz completion status:', error);
+        }
         
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err.message);
       } finally {
         setLoading(false);
+        setCheckingCompletion(false);
       }
     };
 
@@ -177,6 +201,13 @@ export default function ScenarioQuizPage() {
           if (result.success) {
             console.log('📝 Quiz completed! Points:', result.points);
             setQuizCompleted(true);
+          } else if (result.isAlreadyCompleted) {
+            // Activity already completed
+            setQuizCompleted(true);
+            alert('You have already completed this quiz!');
+          } else {
+            // Show error message
+            alert(`Error: ${result.error}`);
           }
         }
       } catch (error) {
@@ -206,7 +237,7 @@ export default function ScenarioQuizPage() {
     return correct;
   };
 
-  if (loading) return <p>Loading quiz questions...</p>;
+  if (loading || checkingCompletion) return <p>Loading quiz questions...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
   if (!scenario || quizQuestions.length === 0) return <p>Unable to load quiz questions.</p>;
 

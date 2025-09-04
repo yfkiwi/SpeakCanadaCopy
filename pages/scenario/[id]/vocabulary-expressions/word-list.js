@@ -14,6 +14,7 @@ export default function WordListPage() {
   
   // Track completion state
   const [pointsAwarded, setPointsAwarded] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(true);
 
   const filteredTerms = vocabularyTerms.filter(term =>
     term.term.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,11 +78,34 @@ export default function WordListPage() {
             console.log(`Found ${vocabularyData?.length || 0} vocabulary terms`);
             setVocabularyTerms(vocabularyData || []);
           }
+
+          // Check if user has already completed glossary exploration
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              const { data: progress, error: progressError } = await supabase
+                .from('user_scenarios_progress')
+                .select('completed_activities')
+                .eq('user_id', session.user.id)
+                .eq('scenario_id', scenarioData.id)
+                .single();
+
+              if (!progressError && progress) {
+                const completedActivities = progress.completed_activities || {};
+                if (completedActivities['glossary_exploration']) {
+                  setPointsAwarded(true);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error checking completion status:', error);
+          }
         }
       } catch (error) {
         console.error('Error:', error);
       } finally {
         setLoading(false);
+        setCheckingCompletion(false);
       }
     };
 
@@ -100,10 +124,18 @@ export default function WordListPage() {
           
           // Show success message
           alert(`Great job! You've earned 2 points for completing the word list. Total points: ${result.points}/10`);
+        } else if (result.isAlreadyCompleted) {
+          // Activity already completed
+          setPointsAwarded(true);
+          alert('You have already completed this activity!');
+        } else {
+          // Show error message
+          alert(`Error: ${result.error}`);
         }
       }
     } catch (error) {
       console.error('Failed to award word list points:', error);
+      alert('Failed to complete word list. Please try again.');
     }
   };
 
@@ -115,7 +147,7 @@ export default function WordListPage() {
     setSelectedTerm(null);
   };
 
-  if (loading) return (
+  if (loading || checkingCompletion) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>

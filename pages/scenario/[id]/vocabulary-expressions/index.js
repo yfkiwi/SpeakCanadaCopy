@@ -49,35 +49,36 @@ export default function VocabularyExpressionsPage() {
       {/* Content */}
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         
-        {/* Start Flashcards Block - GREEN THEME */}
+
+
+        {/* Flashcard Categories Block - PURPLE THEME */}
         <button 
-          onClick={() => router.push(`/scenario/${id}/vocabulary-expressions/flashcards`)}
-          className="w-full bg-white rounded-2xl border-2 border-green-200 p-4 hover:border-green-300 hover:shadow-md transition-all duration-200 text-left"
+          onClick={() => router.push(`/scenario/${id}/vocabulary-expressions/flashcard-categories`)}
+          className="w-full bg-white rounded-2xl border-2 border-purple-200 p-4 hover:border-purple-300 hover:shadow-md transition-all duration-200 text-left"
         >
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              {/* Card stack icon with green colors */}
-              <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+              <svg className="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">Start Flashcards</h3>
-              <p className="text-sm text-gray-500">Learn essential vocabulary and slang through interactive flashcards</p>
+              <h3 className="font-semibold text-gray-900">Flashcard Categories</h3>
+              <p className="text-sm text-gray-500">Practice flashcards by specific vocabulary categories</p>
             </div>
           </div>
           
           <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700">Interactive word learning</p>
-            <div className="bg-green-100 border border-green-200 px-4 py-2 rounded-lg text-center">
-              <span className="text-sm font-semibold text-green-700">Complete for 2 points</span>
+            <p className="text-sm font-medium text-gray-700">Category-based learning with personal collection</p>
+            <div className="bg-purple-100 border border-purple-200 px-4 py-2 rounded-lg text-center">
+              <span className="text-sm font-semibold text-purple-700">Complete for 2 points</span>
             </div>
           </div>
         </button>
 
         {/* Word List Block - BLUE THEME */}
         <button 
-          onClick={() => router.push(`/scenario/${id}/vocabulary-expressions/word-list`)}
+          onClick={() => router.push(`/scenario/${id}/vocabulary-expressions/categories`)}
           className="w-full bg-white rounded-2xl border-2 border-blue-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-left"
         >
           <div className="flex items-center space-x-3 mb-4">
@@ -99,6 +100,8 @@ export default function VocabularyExpressionsPage() {
             </div>
           </div>
         </button>
+
+
 
         {/* Common Expressions Block - PURPLE THEME */}
         <button 

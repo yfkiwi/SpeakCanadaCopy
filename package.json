@@ -1,6 +1,7 @@
 {
   "name": "language-learning-app",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -9,12 +10,13 @@
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@supabase/supabase-js": "^2.39.5",
+    "@supabase/supabase-js": "^2.56.1",
+    "dotenv": "^17.2.1",
     "formidable": "^3.5.4",
     "microsoft-cognitiveservices-speech-sdk": "^1.44.1",
     "next": "^14.2.31",
     "node-fetch": "^2.7.0",
-    "openai": "^5.7.0",
+    "openai": "^5.16.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },

@@ -14,42 +14,35 @@ export default function ReviewPage() {
 
       {/* Content */}
       <div className="max-w-md mx-auto w-full flex-1 px-4 py-6">
-        <h2 className="text-2xl font-bold mb-6">Your vocabulary</h2>
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          {/* Week words */}
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="h-20 bg-red-500 w-full"></div>
-            <div className="px-2 py-3 text-lg text-gray-700">Week words</div>
-          </div>
-          {/* Today words */}
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="h-20 bg-yellow-400 w-full"></div>
-            <div className="px-2 py-3 text-lg text-gray-700">Today words</div>
-          </div>
-          {/* Medium words */}
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="h-20 bg-green-500 w-full"></div>
-            <div className="px-2 py-3 text-lg text-gray-700">Medium words</div>
-          </div>
-          {/* Strong words */}
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
-            <div className="h-20 bg-blue-600 w-full"></div>
-            <div className="px-2 py-3 text-lg text-gray-700">Strong words</div>
-          </div>
+        {/* Your saved words - Prominent and colorful */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+            Your Saved Words
+          </h2>
+          <button 
+            className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-2xl p-6 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            onClick={() => router.push('/review/saved-words')}
+          >
+            <div className="flex items-center justify-between text-white">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-2xl font-bold mb-2">Personal Vocabulary Library</h3>
+                  <p className="text-white text-opacity-90 text-lg">View and manage your collected words</p>
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </button>
         </div>
-        {/* Your save words */}
-        <button 
-          className="flex items-center w-full px-3 py-5 rounded-lg border border-gray-200 mb-2 hover:bg-gray-50 transition"
-          onClick={() => router.push('/review/saved-words')}
-        >
-          <svg className="w-7 h-7 text-blue-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5v14l7-7 7 7V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
-          </svg>
-          <span className="flex-1 text-left text-lg text-gray-800 font-semibold">Your save words</span>
-          <svg className="w-6 h-6 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
       </div>
 
       {/* Bottom Navigation */}

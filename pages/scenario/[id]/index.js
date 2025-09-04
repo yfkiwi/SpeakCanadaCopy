@@ -30,7 +30,7 @@ export default function ScenarioMainPage() {
         .select('id')
         .eq('user_id', session.user.id)
         .eq('scenario_id', scenario.id)
-        .single();
+        .maybeSingle();
 
       return !!data;
     } catch (error) {
@@ -62,7 +62,14 @@ export default function ScenarioMainPage() {
       console.error('Error saving content rating:', error);
     }
   };
-
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("Current user session:", session);
+      console.log("Current user ID:", session?.user?.id);
+    };
+    checkUser();
+  }, []);
   // Main data fetching effect
   useEffect(() => {
     if (!id) return;
@@ -100,7 +107,7 @@ export default function ScenarioMainPage() {
             .select('id')
             .eq('user_id', session.user.id)
             .eq('scenario_id', scenarioData.id)
-            .single();
+            .maybeSingle();
 
           if (ratingData) {
             setHasRatedContent(true); // user has rated, set status

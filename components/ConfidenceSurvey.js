@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { awardSurveyPoints } from '../utils/pointSystem'; // NEW IMPORT
 
@@ -8,9 +8,41 @@ export default function ConfidenceSurvey({ scenario, surveyType = 'pre', onCompl
     familiarity: null,
     confidence: null
   });
+  const [surveyCompleted, setSurveyCompleted] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(true);
 
   const isPostSurvey = surveyType === 'post';
   const isManualSurvey = surveyType === 'manual';
+
+  // Check if survey is already completed
+  useEffect(() => {
+    const checkSurveyCompletion = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && scenario) {
+          const { data: progress, error: progressError } = await supabase
+            .from('user_scenarios_progress')
+            .select('completed_activities')
+            .eq('user_id', session.user.id)
+            .eq('scenario_id', scenario.id)
+            .single();
+
+          if (!progressError && progress) {
+            const completedActivities = progress.completed_activities || {};
+            if (completedActivities['survey_pre_survey']) {
+              setSurveyCompleted(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking survey completion status:', error);
+      } finally {
+        setCheckingCompletion(false);
+      }
+    };
+
+    checkSurveyCompletion();
+  }, [scenario]);
 
   const questions = [
     {
@@ -72,11 +104,18 @@ export default function ConfidenceSurvey({ scenario, surveyType = 'pre', onCompl
         await supabase.from('survey_responses').insert(surveyData);
 
         // NEW: Award points for pre-survey completion (only for pre-survey)
-        if (surveyType === 'pre') {
+        if (surveyType === 'pre' && !surveyCompleted) {
           try {
             const result = await awardSurveyPoints(session.user.id, scenario.id, supabase);
             if (result.success) {
               console.log('📋 Pre-survey completed! Points awarded:', result.points);
+              setSurveyCompleted(true);
+            } else if (result.isAlreadyCompleted) {
+              // Survey already completed
+              setSurveyCompleted(true);
+              console.log('Survey already completed');
+            } else {
+              console.error('Failed to award survey points:', result.error);
             }
           } catch (error) {
             console.error('Failed to award survey points:', error);

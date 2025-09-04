@@ -79,7 +79,8 @@ export default function VocabularyPage() {
 
         {/* Explore Glossary Block */}
         <button 
-          onClick={() => router.push(`/scenario/${id}/vocabulary/glossary`)}
+          //onClick={() => router.push(`/scenario/${id}/vocabulary/glossary`)}
+          onClick={() => router.push(`/scenario/${id}/vocabulary/categories`)}
           className="w-full bg-white rounded-2xl border-2 border-blue-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200"
         >
           <div className="flex items-center space-x-3">

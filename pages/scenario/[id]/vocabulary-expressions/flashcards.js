@@ -5,7 +5,7 @@ import { awardVocabularyPoints } from '../../../../utils/pointSystem';
 
 export default function FlashcardsPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const { id, category } = router.query;
   const [scenario, setScenario] = useState(null);
   const [currentCard, setCurrentCard] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -15,6 +15,11 @@ export default function FlashcardsPage() {
   // Completion state
   const [pointsAwarded, setPointsAwarded] = useState(false);
   const [hasCompletedOnce, setHasCompletedOnce] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(true);
+  
+  // Collection state
+  const [isInLibrary, setIsInLibrary] = useState(false);
+  const [addingToLibrary, setAddingToLibrary] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -43,33 +48,129 @@ export default function FlashcardsPage() {
           const vocabularyScenario = scenarioData.scenario_key || scenarioData.title;
           console.log('Looking for vocabulary with scenario:', vocabularyScenario);
 
-          const { data: vocabularyData, error: vocabularyError } = await supabase
+          // Build query based on category filter
+          let query = supabase
             .from('vocabulary_combined')
             .select('*')
-            .eq('scenario', vocabularyScenario)
-            .order('order_number');
+            .eq('scenario', vocabularyScenario);
+
+          // If category is specified, filter by it
+          if (category) {
+            query = query.eq('category', decodeURIComponent(category));
+            console.log('Filtering by category:', decodeURIComponent(category));
+          }
+
+          const { data: vocabularyData, error: vocabularyError } = await query.order('order_number');
 
           if (vocabularyError) {
             console.error('Error fetching vocabulary:', vocabularyError);
           } else {
             console.log(`Found ${vocabularyData?.length || 0} vocabulary terms`);
             setVocabulary(vocabularyData || []);
+            
+            // Check if first word is in library
+            if (vocabularyData && vocabularyData.length > 0) {
+              await checkIfInLibrary(vocabularyData[0].term);
+            }
+          }
+
+          // Check if user has already completed flashcard completion
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              const { data: progress, error: progressError } = await supabase
+                .from('user_scenarios_progress')
+                .select('completed_activities')
+                .eq('user_id', session.user.id)
+                .eq('scenario_id', scenarioData.id)
+                .single();
+
+              if (!progressError && progress) {
+                const completedActivities = progress.completed_activities || {};
+                if (completedActivities['flashcard_completion']) {
+                  setPointsAwarded(true);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error checking completion status:', error);
           }
         }
       } catch (error) {
         console.error('Error:', error);
       } finally {
         setLoading(false);
+        setCheckingCompletion(false);
       }
     };
 
     fetchData();
   }, [id]);
 
+  // Check if current word is in user's library
+  const checkIfInLibrary = async (term) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data, error } = await supabase
+          .from('user_vocabulary_library')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('term', term)
+          .single();
+
+        if (!error && data) {
+          setIsInLibrary(true);
+        } else {
+          setIsInLibrary(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking library status:', error);
+      setIsInLibrary(false);
+    }
+  };
+
+  // Add word to user's library
+  const addToLibrary = async (term, definition, culturalNote) => {
+    try {
+      setAddingToLibrary(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { error } = await supabase
+          .from('user_vocabulary_library')
+          .insert({
+            user_id: session.user.id,
+            term: term,
+            definition: definition,
+            cultural_note: culturalNote,
+            source: 'system',
+            scenario_key: scenario?.scenario_key || scenario?.title
+          });
+
+        if (!error) {
+          setIsInLibrary(true);
+          console.log('✅ Added to library:', term);
+        } else {
+          console.error('Error adding to library:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding to library:', error);
+    } finally {
+      setAddingToLibrary(false);
+    }
+  };
+
   const nextCard = async () => {
     setShowAnswer(false);
     const nextIndex = (currentCard + 1) % vocabulary.length;
     setCurrentCard(nextIndex);
+    
+    // Check if new word is in library
+    if (vocabulary[nextIndex]) {
+      await checkIfInLibrary(vocabulary[nextIndex].term);
+    }
     
     // Show completion eligibility when user completes full cycle (returns to first card)
     if (nextIndex === 0 && vocabulary.length > 1 && !hasCompletedOnce) {
@@ -95,10 +196,18 @@ export default function FlashcardsPage() {
           
           // Show success message
           alert(`Awesome! You've earned 2 points for completing flashcards. Total points: ${result.points}/10`);
+        } else if (result.isAlreadyCompleted) {
+          // Activity already completed
+          setPointsAwarded(true);
+          alert('You have already completed this activity!');
+        } else {
+          // Show error message
+          alert(`Error: ${result.error}`);
         }
       }
     } catch (error) {
       console.error('Failed to award flashcard points:', error);
+      alert('Failed to complete flashcards. Please try again.');
     }
   };
 
@@ -118,7 +227,7 @@ export default function FlashcardsPage() {
 
   const currentTerm = vocabulary[currentCard];
 
-  if (loading) return (
+  if (loading || checkingCompletion) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -180,7 +289,14 @@ export default function FlashcardsPage() {
               </button>
               <div>
                 <h1 className="text-lg font-semibold text-gray-900">Flashcards</h1>
-                <p className="text-sm text-gray-500">{scenario.title}</p>
+                <p className="text-sm text-gray-500">
+                  {scenario.title}
+                  {category && (
+                    <span className="block text-xs text-blue-600">
+                      Category: {decodeURIComponent(category)}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
             
@@ -288,6 +404,66 @@ export default function FlashcardsPage() {
             </div>
           )}
         </div>
+
+        {/* Know/Don't Know Buttons - Only show when answer is visible */}
+        {showAnswer && (
+          <div className="flex justify-center space-x-4 mt-6">
+            <button
+              onClick={() => {
+                // User knows this word, go to next
+                nextCard();
+              }}
+              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+            >
+              ✅ I Know This Word
+            </button>
+            <button
+              onClick={() => {
+                // User doesn't know, show add to library option
+                setShowAnswer(false);
+              }}
+              className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+            >
+              ❌ I Don't Know
+            </button>
+          </div>
+        )}
+
+        {/* Add to Library Section - Show when user doesn't know */}
+        {!showAnswer && currentTerm && (
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                Add "{currentTerm.term}" to Your Library?
+              </h3>
+              
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={() => addToLibrary(
+                    currentTerm.term, 
+                    currentTerm.definition, 
+                    currentTerm.cultural_note
+                  )}
+                  disabled={addingToLibrary || isInLibrary}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    isInLibrary 
+                      ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                      : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                  }`}
+                >
+                  {isInLibrary ? '✅ Already in Library' : '📚 Add to Library'}
+                </button>
+                
+                <button
+                  onClick={() => nextCard()}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Skip
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="flex justify-between items-center mt-6">

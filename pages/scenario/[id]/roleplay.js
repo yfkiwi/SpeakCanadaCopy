@@ -16,6 +16,7 @@ export default function RoleplayPage() {
   
   // Completion state
   const [conversationCompleted, setConversationCompleted] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(true);
 
   useEffect(() => {
     if (!id) return;
@@ -44,25 +45,33 @@ export default function RoleplayPage() {
           setScenario(scenarioData);
         }
 
-        // Get progress information (commented out to avoid 400 errors)
-        // if (session?.user) {
-        //   const { data: progressData } = await supabase
-        //     .from('progress')
-        //     .select('percent')
-        //     .eq('user_id', session.user.id)
-        //     .eq('scenario_id', id)
-        //     .single();
-        //   
-        //   if (progressData) {
-        //     setProgress(progressData.percent);
-        //   }
-        // }
+        // Check if user has already completed roleplay
+        if (session?.user) {
+          try {
+            const { data: progressData, error: progressError } = await supabase
+              .from('user_scenarios_progress')
+              .select('completed_activities')
+              .eq('user_id', session.user.id)
+              .eq('scenario_id', scenarioData.id)
+              .single();
+
+            if (!progressError && progressData) {
+              const completedActivities = progressData.completed_activities || {};
+              if (completedActivities['roleplay_complete_conversation']) {
+                setConversationCompleted(true);
+              }
+            }
+          } catch (error) {
+            console.error('Error checking roleplay completion status:', error);
+          }
+        }
         
       } catch (error) {
         console.error('Error in fetchData:', error);
         setError('An unexpected error occurred');
       } finally {
         setLoading(false);
+        setCheckingCompletion(false);
       }
     };
     
@@ -79,7 +88,6 @@ export default function RoleplayPage() {
       const result = await awardRoleplayPoints(
         session.user.id,
         scenario.id,
-        'complete_conversation',
         supabase
       );
 
@@ -91,13 +99,21 @@ export default function RoleplayPage() {
         setTimeout(() => {
           router.push(`/scenario/${id}`);
         }, 2000);
+      } else if (result.isAlreadyCompleted) {
+        // Activity already completed
+        setConversationCompleted(true);
+        alert('You have already completed this roleplay!');
+      } else {
+        // Show error message
+        alert(`Error: ${result.error}`);
       }
     } catch (error) {
       console.error('Failed to award roleplay points:', error);
+      alert('Failed to complete roleplay. Please try again.');
     }
   };
 
-  if (loading) {
+  if (loading || checkingCompletion) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p className="text-lg">Loading...</p>

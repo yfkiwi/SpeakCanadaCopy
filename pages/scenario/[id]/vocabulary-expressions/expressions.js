@@ -29,6 +29,7 @@ export default function CommonExpressionsPage() {
 
   // Completion state
   const [pointsAwarded, setPointsAwarded] = useState(false);
+  const [checkingCompletion, setCheckingCompletion] = useState(true);
 
   // Filter expressions based on category and search
   const filteredExpressions = expressions.filter(expr => {
@@ -105,10 +106,18 @@ export default function CommonExpressionsPage() {
           
           // Show success message
           alert(`Excellent! You've earned 2 points for completing expressions. Total points: ${result.points}/10`);
+        } else if (result.isAlreadyCompleted) {
+          // Activity already completed
+          setPointsAwarded(true);
+          alert('You have already completed this activity!');
+        } else {
+          // Show error message
+          alert(`Error: ${result.error}`);
         }
       }
     } catch (error) {
       console.error('Failed to award expressions points:', error);
+      alert('Failed to complete expressions. Please try again.');
     }
   };
 
@@ -466,17 +475,40 @@ export default function CommonExpressionsPage() {
           setCategories(categoriesData);
         }
 
+        // Check if user has already completed expressions exploration
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const { data: progress, error: progressError } = await supabase
+              .from('user_scenarios_progress')
+              .select('completed_activities')
+              .eq('user_id', session.user.id)
+              .eq('scenario_id', scenarioData.id)
+              .single();
+
+            if (!progressError && progress) {
+              const completedActivities = progress.completed_activities || {};
+              if (completedActivities['expressions_exploration']) {
+                setPointsAwarded(true);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error checking completion status:', error);
+        }
+
       } catch (error) {
         setError('Failed to load data');
       } finally {
         setLoading(false);
+        setCheckingCompletion(false);
       }
     };
 
     fetchData();
   }, [id]);
 
-  if (loading) {
+  if (loading || checkingCompletion) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
