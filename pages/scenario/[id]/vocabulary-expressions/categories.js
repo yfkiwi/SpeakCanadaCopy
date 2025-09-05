@@ -9,18 +9,18 @@ export default function CategoriesPage() {
   const [scenario, setScenario] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Track completion state
   const [pointsAwarded, setPointsAwarded] = useState(false);
   const [checkingCompletion, setCheckingCompletion] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    
+
     const fetchData = async () => {
       try {
         console.log('Fetching scenario with numeric_id:', id);
-        
+
         // Fetch scenario data
         const { data: scenarioData, error: scenarioError } = await supabase
           .from('scenarios')
@@ -113,12 +113,12 @@ export default function CategoriesPage() {
             console.error('Error checking completion status:', error);
           }
         }
-              } catch (error) {
-          console.error('Error:', error);
-        } finally {
-          setLoading(false);
-          setCheckingCompletion(false);
-        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+        setCheckingCompletion(false);
+      }
     };
 
     fetchData();
@@ -133,7 +133,7 @@ export default function CategoriesPage() {
         if (result.success) {
           console.log('📋 Categories completed! Points awarded:', result.points);
           setPointsAwarded(true);
-          
+
           // Show success message
           alert(`Great job! You've earned 2 points for exploring vocabulary categories. Total points: ${result.points}/10`);
         } else if (result.isAlreadyCompleted) {
@@ -164,7 +164,7 @@ export default function CategoriesPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <p className="text-gray-500 mb-4">Scenario not found</p>
-        <button 
+        <button
           onClick={() => router.push('/scenarios')}
           className="text-blue-500 hover:text-blue-600 underline"
         >
@@ -181,7 +181,7 @@ export default function CategoriesPage() {
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <button 
+              <button
                 onClick={() => router.push(`/scenario/${id}/vocabulary-expressions`)}
                 className="text-gray-600 hover:text-gray-800"
               >
@@ -196,24 +196,21 @@ export default function CategoriesPage() {
             </div>
             <div className="flex items-center space-x-3">
               {/* NEW: Mark as Complete Button */}
-              {!pointsAwarded && categories.length > 0 && (
-                <button
-                  onClick={handleCompleteCategories}
-                  className="bg-blue-400 hover:bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 flex items-center space-x-2 shadow-sm"
-                  title="Mark as complete and earn 2 points"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>Complete</span>
-                </button>
-              )}
-              
-              {/* Show category count when completed or no completion button needed */}
-              {(pointsAwarded || categories.length === 0) && (
-                <div className="text-sm font-medium text-gray-900">
-                  {categories.length} categories
-                </div>
+              {categories.length > 0 && (
+                pointsAwarded ? (
+                  // Completed UI
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                    </svg>
+                    <span className="text-sm font-medium">Completed</span>
+                  </div>
+                ) : (
+                  // Uncompleted button
+                  <button onClick={handleCompleteCategories} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Complete
+                  </button>
+                )
               )}
             </div>
           </div>

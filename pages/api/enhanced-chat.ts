@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
+import { generateCharacterPrompt } from '../../lib/characterService.mjs';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -12,50 +13,74 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Generate dynamic role and system prompt based on scenario
-const generateRoleAndPrompt = (title: string, context: string): { role: string; systemPrompt: string } => {
-  const titleLower = title.toLowerCase();
+// Map scenario titles to character keys
+const mapScenarioToCharacterKey = (scenarioTitle: string): string => {
+  const titleLower = scenarioTitle.toLowerCase();
   
-  // Tim Hortons / Coffee scenarios
-  if (titleLower.includes('tim hortons') || titleLower.includes('coffee')) {
-    return {
-      role: 'Tim Hortons employee',
-      systemPrompt: `You are a friendly Tim Hortons employee working at the counter. 
-
-${context}
-
-IMPORTANT INSTRUCTIONS:
-- Respond naturally as a real Tim Hortons worker would in real life
-- Know the menu items: Double-Double (coffee with 2 cream, 2 sugar), Timbits (donut holes), Large Regular (large coffee with 1 cream, 1 sugar)
-- Be helpful with menu questions and take orders efficiently
-- Use typical Canadian Tim Hortons expressions like "What can I get started for you?" or "Would you like that for here or to go?"
-- Keep responses concise (1-3 sentences) as in real service interactions
-- Stay completely in character as a Tim Hortons employee
-- Just have a normal coffee shop interaction`
-    };
+  // Tim Hortons scenarios
+  if (titleLower.includes('tim hortons') || titleLower.includes('coffee shop') || titleLower.includes('order coffee')) {
+    return 'tim_hortons';
   }
   
-  // Default for other scenarios
-  return {
-    role: titleLower.includes('restaurant') ? 'restaurant server' :
-          titleLower.includes('bank') ? 'bank teller' :
-          titleLower.includes('apartment') ? 'landlord' :
-          titleLower.includes('transit') ? 'transit helper' :
-          'conversation partner',
-    systemPrompt: `You are roleplaying as a person in this scenario: "${title}".
-    
-${context}
+  // Restaurant scenarios - determine type
+  if (titleLower.includes('restaurant') || titleLower.includes('dining')) {
+    if (titleLower.includes('fast') || titleLower.includes('quick') || 
+        titleLower.includes('mcdonald') || titleLower.includes('subway')) {
+      return 'restaurant_fast';
+    } else if (titleLower.includes('fine') || titleLower.includes('upscale') || 
+               titleLower.includes('formal')) {
+      return 'restaurant_fine';
+    } else {
+      return 'restaurant_casual'; // Default to casual
+    }
+  }
+  
+  // Gym scenarios
+  if (titleLower.includes('gym') || titleLower.includes('fitness')) {
+    if (titleLower.includes('trainer') || titleLower.includes('personal') || 
+        titleLower.includes('workout')) {
+      return 'gym_trainer';
+    } else {
+      return 'gym_front_desk'; // Default to front desk
+    }
+  }
+  
+  // Campus scenarios
+  if (titleLower.includes('campus') || titleLower.includes('university') || 
+      titleLower.includes('college') || titleLower.includes('professor') || 
+      titleLower.includes('office hours') || titleLower.includes('academic') ||
+      titleLower.includes('talk to campus staff')) {
+    return 'campus';
+  }
+  
+  // Directions scenarios
+  if (titleLower.includes('direction') || titleLower.includes('navigate') || 
+      titleLower.includes('find') || titleLower.includes('location') ||
+      titleLower.includes('way to') || titleLower.includes('campus directions') ||
+      titleLower.includes('public transportation')) {
+    return 'directions';
+  }
+  
+  // Shopping scenarios
+  if (titleLower.includes('shop') || titleLower.includes('store') || 
+      titleLower.includes('mall') || titleLower.includes('buy') ||
+      titleLower.includes('purchase') || titleLower.includes('go shopping')) {
+    return 'shopping';
+  }
 
-IMPORTANT INSTRUCTIONS:
-- Respond naturally as a real person in this situation would in real life
-- Stay completely in character at all times
-- Keep responses concise (1-3 sentences) as in real conversations
-- Use natural expressions appropriate for your role
-- NEVER comment on the other person's English skills or pronunciation
-- Do NOT act like a language tutor
-- Just have a normal conversation as if you're really in this scenario
-- If you don't understand something, respond as a real person would by asking for clarification naturally`
-  };
+  // Doctor/Medical scenarios
+  if (titleLower.includes('doctor') || titleLower.includes('medical') ||
+      titleLower.includes('clinic') || titleLower.includes('visit doctor')) {
+    return 'campus'; // Use campus staff for now, could create medical character later
+  }
+
+  // Library scenarios
+  if (titleLower.includes('library')) {
+    return 'campus';
+  }
+  
+  // Default fallback
+  return 'directions'; // Use directions as general helpful person
 };
 
 type ChatResponse = {
@@ -64,6 +89,7 @@ type ChatResponse = {
   audioUrl?: string;
   error?: string;
   transcript?: string;
+  characterInfo?: any;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ChatResponse>) {
@@ -85,16 +111,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(400).json({ success: false, error: 'Transcript is required' });
     }
 
-    // Generate dynamic role and system prompt based on scenario
-    const { role, systemPrompt } = generateRoleAndPrompt(scenarioTitle, scenarioContext);
+    // Map scenario title to character key
+    const characterKey = mapScenarioToCharacterKey(scenarioTitle);
+    
+    // Generate character prompt from database
+    const characterData = await generateCharacterPrompt(characterKey);
+    
+    if (!characterData) {
+      // Fallback to simple prompt if character not found
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a helpful Canadian person in this scenario: "${scenarioTitle}". Be friendly, natural, and use Canadian expressions. Keep responses to 1-3 sentences. If you need to correct English mistakes, do it naturally like: "Oh, you mean a large coffee? Sure thing!"`
+          },
+          ...history,
+          {
+            role: "user",
+            content: transcript
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+      });
 
-    // Get GPT response
+      return res.status(200).json({
+        success: true,
+        response: completion.choices[0].message.content,
+        transcript: transcript
+      });
+    }
+
+    // Get GPT response using character-specific prompt
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: systemPrompt
+          content: characterData.systemPrompt
         },
         ...history,
         {
@@ -137,7 +192,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({
       success: true,
       response: reply,
-      transcript: transcript
+      transcript: transcript,
+      characterInfo: {
+        characterName: characterData.role,
+        timeContext: characterData.timeContext,
+        correctionStyle: characterData.characterData.correctionStyle,
+        characterKey: characterKey
+      }
     });
 
   } catch (error) {
