@@ -91,20 +91,6 @@ export default function HomePage() {
     'Library': '/Library.jpg'
   };
 
-  // Study time data - you can replace this with actual data from your database
-  const studyData = [
-    { name: 'Campus Directions', time: 45, color: '#3B82F6' }, // 33.3%
-    { name: 'Order Coffee', time: 30, color: '#10B981' },      // 22.2%
-    { name: 'Gym', time: 25, color: '#8B5CF6' },               // 18.5%
-    { name: 'Library', time: 35, color: '#F59E0B' }            // 25.9%
-  ];
-  
-  const totalTime = studyData.reduce((sum, item) => sum + item.time, 0);
-  const formatTime = (minutes) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -247,140 +233,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 3. Study time breakdown - UPDATED */}
-      <div className="max-w-md mx-auto px-4 mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-lg">Study time this week</h3>
-        </div>
-        <div className="bg-white rounded-xl p-6 flex items-start gap-6 shadow">
-          <div className="flex flex-col flex-shrink-0">
-            <div className="text-xs text-gray-500 mb-3 font-medium">Total time:</div>
-            <div className="relative flex items-center justify-center w-36 h-36">
-              {/* Multi-colored progress circle - full circle with thicker strokes */}
-              <svg width="144" height="144" viewBox="0 0 144 144" className="transform -rotate-90">
-                {/* Background circle */}
-                <circle
-                  cx="72"
-                  cy="72"
-                  r="60"
-                  fill="none"
-                  stroke="#E5E7EB"
-                  strokeWidth="18"
-                />
-                
-                {studyData.map((item, index) => {
-                  const percentage = (item.time / totalTime) * 100;
-                  const circumference = 2 * Math.PI * 60;
-                  const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-                  
-                  // Calculate offset for each segment
-                  let offset = 0;
-                  for (let i = 0; i < index; i++) {
-                    offset += (studyData[i].time / totalTime) * circumference;
-                  }
-                  
-                  return (
-                    <circle
-                      key={item.name}
-                      cx="72"
-                      cy="72"
-                      r="60"
-                      fill="none"
-                      stroke={item.color}
-                      strokeWidth="18"
-                      strokeLinecap="round"
-                      strokeDasharray={strokeDasharray}
-                      strokeDashoffset={-offset}
-                    />
-                  );
-                })}
-              </svg>
-              
-              {/* Center text showing total time */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-gray-800">{formatTime(totalTime)}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Legend with thicker lines and time details */}
-          <div className="flex flex-col gap-2 flex-1 justify-center">
-            <div className="text-xs text-gray-500 mb-1 font-medium">Time breakdown:</div>
-            {studyData.map((item) => (
-              <div key={item.name} className="flex items-center gap-2">
-                <div 
-                  className="w-4 h-1 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: item.color }}
-                ></div>
-                <div className="flex-1 flex items-center justify-between">
-                  <span 
-                    className="text-xs font-medium"
-                    style={{ color: item.color }}
-                  >
-                    {item.name}
-                  </span>
-                  <div className="flex-1 mx-2 border-b border-dotted border-gray-300" style={{ borderColor: item.color, opacity: 0.5 }}></div>
-                  <span 
-                    className="text-xs font-medium"
-                    style={{ color: item.color }}
-                  >
-                    {formatTime(item.time)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* 4. User experience video section */}
-      <div className="max-w-md mx-auto px-4 mt-8">
-        <h3 className="font-semibold text-lg mb-3">User experience video</h3>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {/* Mock user video cards */}
-          {[
-            {
-              name: 'Amanda roch',
-              image: 'https://randomuser.me/api/portraits/women/44.jpg',
-              video: '#',
-            },
-            {
-              name: 'Tarkan',
-              image: 'https://randomuser.me/api/portraits/men/32.jpg',
-              video: '#',
-            },
-            {
-              name: 'Lina',
-              image: 'https://randomuser.me/api/portraits/women/68.jpg',
-              video: '#',
-            },
-          ].map((user, idx) => (
-            <div
-              key={user.name}
-              className="flex-shrink-0 w-72 rounded-2xl bg-yellow-400 overflow-hidden shadow-md flex flex-col"
-              style={{ minHeight: 160 }}
-            >
-              <div className="flex items-center h-28 px-4 relative bg-yellow-400">
-                <button className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 rounded-full p-2 shadow-md">
-                  <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="white" />
-                    <polygon points="10,8 16,12 10,16" fill="#FBBF24" />
-                  </svg>
-                </button>
-                <img src={user.image} alt={user.name} className="h-20 w-20 rounded-full object-cover mx-auto" />
-              </div>
-              <div className="flex items-center justify-between bg-white px-4 py-3">
-                <span className="font-semibold text-gray-800 text-base truncate">{user.name}</span>
-                <button className="bg-blue-600 text-white px-5 py-2 rounded-xl font-semibold text-base">Let's go</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* 5. Promo banner - MOVED TO BOTTOM */}
+      {/* 3. Promo banner - MOVED TO BOTTOM */}
       <div className="max-w-md mx-auto px-4 mt-6">
         <div className="relative flex items-center justify-between overflow-visible" style={{ minHeight: 56 }}>
           {/* SVG Banner */}
