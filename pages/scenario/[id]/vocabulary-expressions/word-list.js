@@ -246,7 +246,7 @@ export default function WordListPage() {
       </div>
 
       {/* Vocabulary List */}
-      <div className="max-w-md mx-auto px-4 pb-6">
+      <div className="max-w-md mx-auto px-4 pb-6 select-text">
         <div className="space-y-3">
           {filteredTerms.map((term) => (
             <button
@@ -255,7 +255,8 @@ export default function WordListPage() {
               className="w-full bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-left"
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
+                {/* 只在词汇列表的文本部分启用选词 */}
+                <div className="flex-1 min-w-0" data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                   <div className="flex items-center space-x-2 mb-1">
                     <h3 className="font-semibold text-gray-900 truncate">{term.term}</h3>
                   </div>

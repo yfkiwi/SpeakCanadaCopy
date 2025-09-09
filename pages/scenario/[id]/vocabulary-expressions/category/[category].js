@@ -22,11 +22,11 @@ export default function CategoryVocabularyPage() {
     if (event) {
       event.stopPropagation();
     }
-    
+
     if ('speechSynthesis' in window) {
       // Stop any currently playing speech
       speechSynthesis.cancel();
-      
+
       const utterance = new SpeechSynthesisUtterance(term);
       utterance.rate = 0.8;
       utterance.lang = 'en-CA';
@@ -36,12 +36,12 @@ export default function CategoryVocabularyPage() {
 
   useEffect(() => {
     if (!id || !category) return;
-    
+
     const fetchData = async () => {
       try {
         console.log('Fetching scenario with numeric_id:', id);
         console.log('Category:', decodeURIComponent(category));
-        
+
         // Fetch scenario data
         const { data: scenarioData, error: scenarioError } = await supabase
           .from('scenarios')
@@ -59,7 +59,7 @@ export default function CategoryVocabularyPage() {
 
         if (scenarioData) {
           const decodedCategory = decodeURIComponent(category);
-          
+
           // Fetch vocabulary for this category
           const vocabularyScenario = scenarioData.scenario_key || scenarioData.title;
           const { data: vocabularyData, error: vocabularyError } = await supabase
@@ -108,7 +108,7 @@ export default function CategoryVocabularyPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
         <p className="text-gray-500 mb-4">Scenario not found</p>
-        <button 
+        <button
           onClick={() => router.push('/scenarios')}
           className="text-blue-500 hover:text-blue-600 underline"
         >
@@ -121,13 +121,17 @@ export default function CategoryVocabularyPage() {
   const decodedCategory = decodeURIComponent(category);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div
+      className="min-h-screen bg-gray-50"
+      data-word-lookup="enabled"
+      style={{ userSelect: 'text' }}
+    >
       {/* Header - Same style as word-list */}
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <button 
+              <button
                 onClick={() => router.push(`/scenario/${id}/vocabulary-expressions/categories`)}
                 className="text-gray-600 hover:text-gray-800"
               >
@@ -182,7 +186,7 @@ export default function CategoryVocabularyPage() {
                     <p className="text-xs text-gray-500 mt-1">{term.ipa_pronunciation}</p>
                   )}
                 </div>
-                
+
                 {/* Pronunciation Button and Arrow - Same as word-list */}
                 <div className="flex items-center space-x-2 ml-3">
                   <button
@@ -194,7 +198,7 @@ export default function CategoryVocabularyPage() {
                       <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.82L4.104 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.104l4.279-3.82a1 1 0 011.617.82zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
                     </svg>
                   </button>
-                  
+
                   <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -268,7 +272,7 @@ export default function CategoryVocabularyPage() {
               )}
 
               {/* Pronunciation Button */}
-              <button 
+              <button
                 onClick={() => speakTerm(selectedTerm.term)}
                 className="w-full bg-blue-500 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
               >

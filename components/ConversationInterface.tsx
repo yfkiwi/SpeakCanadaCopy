@@ -1,6 +1,8 @@
 // ConversationInterface.tsx - 移动端优化版本
 import React, { useState, useRef, useEffect } from 'react';
 import SlangLoader from './SlangLoader';
+import { useTranslation } from '../hooks/useTranslation';
+import { supabase } from '../lib/supabaseClient';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -51,6 +53,64 @@ const ConversationInterface: React.FC<ConversationProps> = ({
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
   const streamingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Translation states
+  const { translate, isTranslating } = useTranslation();
+  const [userLanguage, setUserLanguage] = useState<string>('');
+  const [translatedMessages, setTranslatedMessages] = useState<Map<number, string>>(new Map());
+  const [showTranslations, setShowTranslations] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    const fetchUserLanguage = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('native_language')
+            .eq('user_id', user.id)
+            .single();
+          if (profile?.native_language) {
+            setUserLanguage(profile.native_language);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user language:', error);
+      }
+    };
+    fetchUserLanguage();
+  }, []);
+
+  const handleTranslateMessage = async (messageIndex: number, messageContent: string) => {
+    if (!userLanguage || !messageContent) return;
+    const translation = await translate(messageContent, userLanguage);
+    if (translation) {
+      setTranslatedMessages(prev => new Map(prev.set(messageIndex, translation)));
+      setShowTranslations(prev => new Set(prev.add(messageIndex)));
+    }
+  };
+
+  const hideTranslation = (messageIndex: number) => {
+    setShowTranslations(prev => {
+      const next = new Set(prev);
+      next.delete(messageIndex);
+      return next;
+    });
+  };
+
+  const TranslateButton: React.FC<{ messageIndex: number; messageContent: string; isUserMessage: boolean; }>= ({ messageIndex, messageContent, isUserMessage }) => {
+    if (!userLanguage || isUserMessage) return null;
+    const hasTranslation = showTranslations.has(messageIndex);
+    return (
+      <button
+        onClick={() => hasTranslation ? hideTranslation(messageIndex) : handleTranslateMessage(messageIndex, messageContent)}
+        disabled={isTranslating}
+        className="text-xs text-blue-500 hover:text-blue-400 mt-1 disabled:opacity-50"
+      >
+        {hasTranslation ? '🙈 Hide' : '🌐 Translate'}
+      </button>
+    );
+  };
 
   // Random clarification phrases
   const clarificationPhrases = [
@@ -552,6 +612,19 @@ const ConversationInterface: React.FC<ConversationProps> = ({
                   <span className="inline-block w-2 h-4 ml-1 bg-gray-600 animate-pulse"></span>
                 )}
               </p>
+              {message.role === 'assistant' && (
+                <TranslateButton
+                  messageIndex={index}
+                  messageContent={message.content}
+                  isUserMessage={false}
+                />
+              )}
+              {showTranslations.has(index) && translatedMessages.has(index) && (
+                <div className="mt-2 pt-2 border-t border-gray-300">
+                  <p className="text-xs text-gray-600 mb-1">Translation:</p>
+                  <p className="text-sm text-gray-700">{translatedMessages.get(index)}</p>
+                </div>
+              )}
             </div>
           </div>
         ))}

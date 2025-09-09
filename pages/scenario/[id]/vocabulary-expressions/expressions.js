@@ -210,7 +210,7 @@ export default function CommonExpressionsPage() {
             }}
           >
             {/* Expression Title */}
-            <div>
+            <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
               <h2 className="text-xl font-bold text-gray-900 mb-2 break-words">
                 "{expression.expression}"
               </h2>
@@ -243,7 +243,7 @@ export default function CommonExpressionsPage() {
 
             {/* What You Might Hear Back */}
             {commonResponses.length > 0 && (
-              <div>
+              <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <div className="flex items-center space-x-2 mb-3">
                   <span className="text-purple-600">👥</span>
                   <h3 className="font-semibold text-gray-900">What You Might Hear Back</h3>
@@ -266,7 +266,7 @@ export default function CommonExpressionsPage() {
 
             {/* Cultural Note */}
             {expression.cultural_note && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg" data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <div className="flex items-start space-x-2">
                   <span className="text-yellow-600">🇨🇦</span>
                   <div>
@@ -281,7 +281,7 @@ export default function CommonExpressionsPage() {
 
             {/* Alternative Expressions */}
             {alternativeExpressions.length > 0 && (
-              <div>
+              <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <div className="flex items-center space-x-2 mb-3">
                   <span className="text-blue-600">🔄</span>
                   <h3 className="font-semibold text-gray-900">Other Ways to Say It</h3>
@@ -304,7 +304,7 @@ export default function CommonExpressionsPage() {
 
             {/* Follow-up Expressions */}
             {followUpExpressions.length > 0 && (
-              <div>
+              <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <div className="flex items-center space-x-2 mb-3">
                   <span className="text-green-600">💬</span>
                   <h3 className="font-semibold text-gray-900">What to Say Next</h3>
@@ -350,7 +350,7 @@ export default function CommonExpressionsPage() {
 
             {/* Body Language Tips */}
             {expression.body_language_tips && (
-              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg" data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <div className="flex items-start space-x-2">
                   <span className="text-blue-600">🤝</span>
                   <div>
@@ -365,7 +365,7 @@ export default function CommonExpressionsPage() {
 
             {/* Pronunciation Tips */}
             {expression.ipa_pronunciation && (
-              <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
+              <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg" data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <div className="flex items-start space-x-2">
                   <span className="text-purple-600">🗣️</span>
                   <div>
@@ -679,7 +679,8 @@ export default function CommonExpressionsPage() {
                 >
                   <div className="flex items-start space-x-3">
                     <span className="text-2xl flex-shrink-0">{categoryDetails.category_icon}</span>
-                    <div className="flex-1 min-w-0">
+                    {/* 只在表达式文本部分启用选词 */}
+                    <div className="flex-1 min-w-0" data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                       <h3 className="font-semibold text-gray-900 text-base mb-2 break-words">
                         "{expression.expression}"
                       </h3>

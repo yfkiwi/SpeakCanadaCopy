@@ -19,3 +19,36 @@ body {
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
+
+/* Word Lookup Styles */
+/* 确保选词功能的文本可选择 */
+[data-word-lookup="enabled"] {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* 确保按钮等交互元素不受影响 */
+[data-word-lookup="enabled"] button,
+[data-word-lookup="enabled"] a,
+[data-word-lookup="enabled"] input {
+  user-select: none;
+  pointer-events: auto;
+}
+
+/* 选中文本的样式 */
+[data-word-lookup="enabled"] ::selection {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* 弹窗的响应式样式 */
+@media (max-width: 640px) {
+  .word-lookup-tooltip {
+    max-width: calc(100vw - 20px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+  }
+}

@@ -349,14 +349,17 @@ export default function FlashcardsPage() {
         >
           {!showAnswer ? (
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                {currentTerm?.term}
-              </h2>
-              {currentTerm?.ipa_pronunciation && (
-                <p className="text-lg text-gray-600 mb-4">
-                  {currentTerm.ipa_pronunciation}
-                </p>
-              )}
+              {/* 只在单词部分启用选词 */}
+              <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                  {currentTerm?.term}
+                </h2>
+                {currentTerm?.ipa_pronunciation && (
+                  <p className="text-lg text-gray-600 mb-4">
+                    {currentTerm.ipa_pronunciation}
+                  </p>
+                )}
+              </div>
               <p className="text-gray-500">Tap to see definition</p>
               <div className="mt-4 text-xs text-gray-400">
                 Press spacebar or tap card to flip
@@ -365,7 +368,7 @@ export default function FlashcardsPage() {
           ) : (
             <div className="text-center space-y-4">
               {/* Definition */}
-              <div>
+              <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
                   Definition
                 </h3>
@@ -376,7 +379,7 @@ export default function FlashcardsPage() {
 
               {/* Example Sentence */}
               {currentTerm?.example_sentence && (
-                <div>
+                <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                   <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
                     Example
                   </h3>

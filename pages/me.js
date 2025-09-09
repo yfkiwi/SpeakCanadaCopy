@@ -2,6 +2,19 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 
+const LANGUAGES = [
+  { code: 'zh', name: 'Chinese (中文)', flag: '🇨🇳' },
+  { code: 'ko', name: 'Korean (한국어)', flag: '🇰🇷' },
+  { code: 'ja', name: 'Japanese (日本語)', flag: '🇯🇵' },
+  { code: 'hi', name: 'Hindi (हिन्दी)', flag: '🇮🇳' },
+  { code: 'ar', name: 'Arabic (العربية)', flag: '🇸🇦' },
+  { code: 'fr', name: 'French (Français)', flag: '🇫🇷' },
+  { code: 'es', name: 'Spanish (Español)', flag: '🇪🇸' },
+  { code: 'pt', name: 'Portuguese (Português)', flag: '🇵🇹' },
+  { code: 'de', name: 'German (Deutsch)', flag: '🇩🇪' },
+  { code: 'ru', name: 'Russian (Русский)', flag: '🇷🇺' },
+];
+
 export default function MePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -222,14 +235,19 @@ export default function MePage() {
             <div className="flex items-center space-x-2">
               {editingField === 'nativeLanguage' ? (
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
+                  <select
                     value={tempValue}
                     onChange={(e) => setTempValue(e.target.value)}
-                    className="text-sm border border-gray-300 rounded px-2 py-1 w-24"
-                    placeholder="Enter language"
+                    className="text-sm border border-gray-300 rounded px-2 py-1"
                     autoFocus
-                  />
+                  >
+                    <option value="">Select language</option>
+                    {LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.flag} {lang.name}
+                      </option>
+                    ))}
+                  </select>
                   <button 
                     onClick={handleSaveField}
                     className="text-green-500 hover:text-green-600"
@@ -249,7 +267,9 @@ export default function MePage() {
                 </div>
               ) : (
                 <>
-                  <span className="text-gray-500 text-sm">{userProfile.nativeLanguage || 'Not set'}</span>
+                  <span className="text-gray-500 text-sm">
+                    {LANGUAGES.find(lang => lang.code === userProfile.nativeLanguage)?.name || 'Not set'}
+                  </span>
                   <button onClick={() => handleEditField('nativeLanguage')}>
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

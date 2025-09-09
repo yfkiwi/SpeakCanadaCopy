@@ -21,7 +21,7 @@ export default function Login() {
     setShowReset(false);
     setResetSent(false);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       // Supabase returns 'Invalid login credentials' for wrong password or non-existent email
       // To avoid leaking which emails are registered, you may want to always show the same error
@@ -32,7 +32,18 @@ export default function Login() {
       }
       setError(error.message);
     } else {
-      router.push('/home');
+      // 检查用户是否已设置母语
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('native_language')
+        .eq('user_id', data.user.id)
+        .single();
+      
+      if (!profile?.native_language) {
+        router.push('/language-setup');
+      } else {
+        router.push('/home');
+      }
     }
   };
 
@@ -44,7 +55,8 @@ export default function Login() {
     if (error) {
       setError(error.message);
     } else {
-      router.push('/welcome'); // Redirect new users to the welcome page
+      // 新用户注册后先进入语言设置页面
+      router.push('/language-setup');
     }
   };
 
