@@ -262,7 +262,7 @@ export default function ReviewPage() {
 
             {/* Modal Content */}
             <div className="space-y-5">
-              <div>
+              <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                 <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
                   Definition
                 </h3>
@@ -272,7 +272,7 @@ export default function ReviewPage() {
               </div>
 
               {selectedWord.cultural_note && (
-                <div>
+                <div data-word-lookup="enabled" style={{ userSelect: 'text' }}>
                   <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
                     Cultural Note
                   </h3>
