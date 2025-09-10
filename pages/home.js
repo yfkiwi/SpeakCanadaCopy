@@ -7,6 +7,8 @@ export default function HomePage() {
   const [user, setUser] = useState(null);
   const [ongoingScenarios, setOngoingScenarios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,6 +91,32 @@ export default function HomePage() {
     'Gym': '/Gym.jpg',
     'Go Shopping': '/Go Shopping.jpg',
     'Library': '/Library.jpg'
+  };
+
+  const submitFeedback = async () => {
+    if (!feedbackText.trim()) return;
+    
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('user_feedback')
+        .insert({
+          user_id: user?.id,
+          feedback_text: feedbackText.trim(),
+          user_email: user?.email,
+          page_source: 'homepage'
+        });
+
+      if (error) throw error;
+      
+      setFeedbackText('');
+      alert('Thank you for your feedback! 🙏');
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to send feedback. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
 
@@ -236,9 +264,9 @@ export default function HomePage() {
 
 
       {/* 3. Promo banner - MOVED TO BOTTOM */}
-      <div className="max-w-md mx-auto px-4 mt-6">
+      {/* <div className="max-w-md mx-auto px-4 mt-6">
         <div className="relative flex items-center justify-between overflow-visible" style={{ minHeight: 56 }}>
-          {/* SVG Banner */}
+         
           <div className="absolute left-0 top-0 w-full h-full pointer-events-none select-none">
             <svg width="100%" height="56" viewBox="0 0 328 38" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', width: '100%', height: '56px' }}>
               <g clipPath="url(#clip0_1735_175649)">
@@ -258,12 +286,59 @@ export default function HomePage() {
               </defs>
             </svg>
           </div>
-          {/* Promo text and button (on top of SVG) */}
+          
           <div className="relative z-10 flex flex-row items-center justify-between w-full h-full px-5 py-3 gap-2">
             <span className="text-white font-semibold text-sm drop-shadow text-left flex-1 pr-2" style={{lineHeight: '1.2'}}>
               Get 50% off SpeakCanada Premium & unlock new scenes!
             </span>
             <button className="bg-white text-orange-500 px-2 py-1 rounded-lg font-semibold shadow text-xs whitespace-nowrap flex-shrink-0">View</button>
+          </div>
+        </div>
+      </div> */}
+
+      {/* 4. Feedback section - NEW */}
+      <div className="max-w-md mx-auto px-4 mt-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+          <div className="flex items-center mb-3">
+            <span className="text-lg mr-2">💭</span>
+            <h3 className="font-semibold text-gray-800">Help us improve</h3>
+          </div>
+          
+          <div className="text-sm text-gray-600 leading-relaxed mb-4">
+            <p className="mb-2">
+              We're just regular students who built this app to help fellow international students struggling abroad.
+            </p>
+            <p className="mb-2">
+              We sincerely hope to get your feedback. You can also join our Discord community to connect directly with developers.
+            </p>
+            <p>
+              Hope this can help more people 🙏
+            </p>
+          </div>
+          
+          <textarea
+            placeholder="Please share your thoughts and suggestions..."
+            className="w-full p-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            rows="4"
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+          />
+          
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={submitFeedback}
+              disabled={!feedbackText.trim() || submitting}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors"
+            >
+              {submitting ? 'Sending...' : 'Send Feedback'}
+            </button>
+            
+            <button
+              onClick={() => window.open('https://discord.gg/f5hY2fcB', '_blank')}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
+            >
+              Discord
+            </button>
           </div>
         </div>
       </div>
