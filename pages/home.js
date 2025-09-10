@@ -306,13 +306,10 @@ export default function HomePage() {
           
           <div className="text-sm text-gray-600 leading-relaxed mb-4">
             <p className="mb-2">
-              We're just regular students who built this app to help fellow international students struggling abroad.
-            </p>
-            <p className="mb-2">
-              We sincerely hope to get your feedback. You can also join our Discord community to connect directly with developers.
+            We are just some students who built this app to help international students have a better time learning English. We would love to get your feedback in order to improve this app so we can help the international students better. You can also join our discord to connect with us directly! 
             </p>
             <p>
-              Hope this can help more people 🙏
+              Discord : <a href="https://discord.gg/f5hY2fcB" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://discord.gg/f5hY2fcB</a>
             </p>
           </div>
           
@@ -333,12 +330,12 @@ export default function HomePage() {
               {submitting ? 'Sending...' : 'Send Feedback'}
             </button>
             
-            <button
+            {/* <button
               onClick={() => window.open('https://discord.gg/f5hY2fcB', '_blank')}
               className="bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
             >
               Discord
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
