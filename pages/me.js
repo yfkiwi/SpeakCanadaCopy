@@ -102,6 +102,11 @@ export default function MePage() {
 
       setEditingField(null);
       setTempValue('');
+
+      // 如果更改的是语言设置，强制刷新页面
+      if (editingField === 'nativeLanguage') {
+        window.location.reload();
+      }
     } catch (error) {
       console.error('Error saving field:', error);
     }
