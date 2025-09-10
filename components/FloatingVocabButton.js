@@ -3,13 +3,20 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { saveVocabularyToLibrary, checkVocabularyExists } from '../utils/supabase-vocab';
 
 // 全局悬浮球状态管理
-const FloatingVocabContext = createContext();
+export const FloatingVocabContext = createContext();
 
 // 悬浮球状态提供者
 export function FloatingVocabProvider({ children }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [hasSelection, setHasSelection] = useState(false);
+  
+  // ADD THESE NEW STATES:
+  const [libraryRefreshTrigger, setLibraryRefreshTrigger] = useState(0);
+  
+  const triggerLibraryRefresh = () => {
+    setLibraryRefreshTrigger(prev => prev + 1);
+  };
 
   // 监听文本选择
   useEffect(() => {
@@ -28,7 +35,10 @@ export function FloatingVocabProvider({ children }) {
     isModalOpen,
     setIsModalOpen,
     selectedText,
-    hasSelection
+    hasSelection,
+    // ADD THESE TO CONTEXT VALUE:
+    libraryRefreshTrigger,
+    triggerLibraryRefresh
   };
 
   return (
@@ -105,6 +115,9 @@ function AddVocabModal({ isOpen, onClose, initialTerm }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Get refresh trigger from context
+  const { triggerLibraryRefresh } = useContext(FloatingVocabContext);
 
   // 重置表单当initialTerm变化时
   useEffect(() => {
@@ -153,6 +166,9 @@ function AddVocabModal({ isOpen, onClose, initialTerm }) {
         source: 'custom',
         scenario_key: null // 用户自定义词汇不关联特定场景
       });
+
+      // ADD THIS LINE - trigger refresh for all library displays
+      triggerLibraryRefresh();
 
       // 成功后重置表单并关闭Modal
       setFormData({ term: '', definition: '', cultural_note: '' });

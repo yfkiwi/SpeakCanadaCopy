@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { FloatingVocabContext } from '../components/FloatingVocabButton';
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -9,6 +10,9 @@ export default function ReviewPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [groupedWords, setGroupedWords] = useState({});
   const [selectedWord, setSelectedWord] = useState(null);
+
+  // Get refresh trigger from context
+  const { libraryRefreshTrigger } = useContext(FloatingVocabContext);
 
   useEffect(() => {
     const fetchLibraryWords = async () => {
@@ -53,6 +57,33 @@ export default function ReviewPage() {
 
     setGroupedWords(grouped);
   }, [libraryWords, searchTerm]);
+
+  // Listen for refresh trigger from FloatingVocabButton
+  useEffect(() => {
+    if (libraryRefreshTrigger > 0) {
+      // Re-fetch library data when refresh is triggered
+      const fetchLibraryWords = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const { data: libraryData, error: libraryError } = await supabase
+              .from('user_vocabulary_library')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .order('created_at', { ascending: false });
+
+            if (!libraryError) {
+              setLibraryWords(libraryData || []);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching library words:', error);
+        }
+      };
+      
+      fetchLibraryWords();
+    }
+  }, [libraryRefreshTrigger]);
 
   // Remove word from library
   const removeFromLibrary = async (wordId) => {

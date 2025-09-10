@@ -1,29 +1,34 @@
 import { supabase } from '../lib/supabaseClient'; // 你的supabase客户端
 
 export async function saveVocabularyToLibrary(vocabularyData) {
-  // 获取当前用户
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    throw new Error('User not logged in');
-  }
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      throw new Error('User not authenticated');
+    }
 
-  const { data, error } = await supabase
-    .from('user_vocabulary_library')
-    .insert([{
+    const dataToSave = {
       user_id: session.user.id,
-      term: vocabularyData.term,
-      definition: vocabularyData.definition,
-      cultural_note: vocabularyData.cultural_note,
-      source: 'custom',
-      scenario_key: null
-    }]);
+      ...vocabularyData,
+      created_at: new Date().toISOString()
+    };
 
-  if (error) {
+    // Fix 406 error by ensuring proper data format
+    const { data, error } = await supabase
+      .from('user_vocabulary_library')
+      .insert([dataToSave])  // Wrap in array for consistency
+      .select();  // Return the inserted data
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, data: data[0] };
+  } catch (error) {
     console.error('Error saving vocabulary:', error);
     throw error;
   }
-
-  return data;
 }
 
 export async function checkVocabularyExists(term) {
@@ -38,12 +43,12 @@ export async function checkVocabularyExists(term) {
     .select('id')
     .eq('user_id', session.user.id)
     .eq('term', term.toLowerCase())
-    .single();
+    .limit(1);
 
-  if (error && error.code !== 'PGRST116') {
+  if (error) {
     console.error('Error checking vocabulary:', error);
     throw error;
   }
 
-  return !!data;
+  return data && data.length > 0;
 }
