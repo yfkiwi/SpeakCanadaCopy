@@ -58,6 +58,21 @@ async function analyzeWithAzure(wavData: string): Promise<{ recognizedText: stri
     const accessToken = await getAzureToken();
     const wavBuffer = Buffer.from(wavData, 'base64');
 
+    // Debug audio format
+    console.log('🔍 Audio sample info:', {
+      size: wavData.length,
+      header: wavData.substring(0, 20), // Check WAV file header
+      isBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(wavData)
+    });
+
+    // Decode base64 to check actual bytes
+    console.log('🔍 Decoded audio info:', {
+      byteLength: wavBuffer.length,
+      firstBytes: Array.from(wavBuffer.slice(0, 16)).map(b => b.toString(16)),
+      hasWAVHeader: wavBuffer.slice(0, 4).toString() === 'RIFF',
+      wavHeader: wavBuffer.slice(0, 12).toString()
+    });
+
     const sttResponse = await fetch(
       `https://${serviceRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed`,
       {
@@ -167,8 +182,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const recognizedTexts: string[] = [];
     
     // Process samples in parallel to avoid Netlify timeout
-    const analysisPromises = audioSamples.map(async (sample: { wavData: string; transcript: string }, index: number) => {
-      console.log(`⭐ Analyzing sample ${index + 1}/${audioSamples.length}...`);
+    // Limit to 3 samples max to avoid overwhelming Azure API
+    const maxSamples = Math.min(3, audioSamples.length);
+    const samplesToProcess = audioSamples.slice(0, maxSamples);
+    
+    console.log(`⭐ Processing ${samplesToProcess.length} selected samples (from ${audioSamples.length} total)...`);
+    
+    const analysisPromises = samplesToProcess.map(async (sample: { wavData: string; transcript: string }, index: number) => {
+      console.log(`⭐ Analyzing sample ${index + 1}/${samplesToProcess.length}...`);
       
       try {
         const azureResult = await analyzeWithAzure(sample.wavData);
@@ -231,7 +252,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     });
 
     console.log(`⭐ Analysis Summary:`);
-    console.log(`- Total samples processed: ${audioSamples.length}`);
+    console.log(`- Total samples received: ${audioSamples.length}`);
+    console.log(`- Samples processed: ${samplesToProcess.length}`);
     console.log(`- Samples with valid confidence: ${scores.length}`);
     console.log(`- Sentence-level scores: [${scores.join(', ')}]`);
     console.log(`- Word-level confidences count: ${confidences.length}`);

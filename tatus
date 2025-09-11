@@ -1,0 +1,5 @@
+[33mcb2daf3[m feat: Add character database system and improve roleplay UI
+[33mf3e30cc[m feat: implement persistent progress system, personal library, and vocabulary categorization
+[33m97db32c[m Update with latest code from original repo
+[33m1b40e68[m Add Azure Speech confidence detection for improved speech clarity assessment
+[33m86e8cca[m Complete merge: restructure scenario routes and update all /dashboard links to /scenarios
