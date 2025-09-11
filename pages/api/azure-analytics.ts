@@ -1,5 +1,7 @@
 // pages/api/azure-analytics.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
+
+export const runtime = 'nodejs';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';

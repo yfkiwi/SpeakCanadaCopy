@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import ConfidenceSurvey from '../components/ConfidenceSurvey';
 
 // Map scenario names to image filenames (ensure these images exist in /public)
 const scenarioImages = {
@@ -35,11 +34,6 @@ export default function Scenarios() {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('ongoing');
   
-  // Survey state - remove survey logic from scenarios page
-  const [showSurvey, setShowSurvey] = useState(false);
-  const [surveyScenario, setSurveyScenario] = useState(null);
-  const [surveyType, setSurveyType] = useState('pre');
-  const [pendingNavigation, setPendingNavigation] = useState(null);
 
   useEffect(() => {
     fetchData();

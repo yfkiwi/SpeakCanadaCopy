@@ -1,6 +1,9 @@
 // pages/api/stt.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
+
+export const runtime = 'nodejs';
+export const config = { api: { bodyParser: false } };
 import { IncomingForm, Files, Fields, File } from 'formidable';
 import { createReadStream } from 'fs';
 import fs from 'fs';
@@ -12,12 +15,7 @@ type ApiResponse = {
   error?: string;
 };
 
-// Disable body parsing, we'll handle it ourselves with formidable
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Body parsing disabled above
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

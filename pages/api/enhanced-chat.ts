@@ -1,6 +1,8 @@
 // pages/api/enhanced-chat.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
+
+export const runtime = 'nodejs';
 import { createClient } from '@supabase/supabase-js';
 import { generateCharacterPrompt } from '../../lib/characterService.mjs';
 

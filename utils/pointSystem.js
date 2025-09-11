@@ -3,10 +3,6 @@
   // Points are awarded for different activities
 
   export const POINT_SYSTEM = {
-    // Survey points (1 point)
-    // SURVEY: {
-    //   PRE_SURVEY_COMPLETION: 1, // Complete pre-survey when starting scenario
-    // },
     
     // Video points (2 points)
     VIDEO: {
@@ -54,85 +50,10 @@
     if (activity.startsWith('category_')) return POINT_SYSTEM.VOCABULARY.GLOSSARY_EXPLORATION;
     if (activity.startsWith('roleplay_')) return POINT_SYSTEM.ROLEPLAY.COMPLETE_CONVERSATION;
     if (activity.startsWith('video_')) return POINT_SYSTEM.VIDEO.WATCH_COMPLETE;
-    //if (activity.startsWith('survey_')) return POINT_SYSTEM.SURVEY.PRE_SURVEY_COMPLETION;
     if (activity.startsWith('quiz_')) return POINT_SYSTEM.QUIZ.SCENARIO_QUIZ;
     return 0;
   };
 
-  // Award points for survey completion
-  // export const awardSurveyPoints = async (userId, scenarioId, supabase) => {
-  //   try {
-  //     // Get current progress with completed_activities
-  //     const { data: currentProgress, error: progressError } = await supabase
-  //       .from('user_scenarios_progress')
-  //       .select('progress, status, completed_activities')
-  //       .eq('user_id', userId)
-  //       .eq('scenario_id', scenarioId)
-  //       .single();
-
-  //     // Handle case where no progress record exists yet
-  //     if (progressError && progressError.code !== 'PGRST116') {
-  //       console.error('Error fetching progress:', progressError);
-  //       return { success: false, error: progressError.message };
-  //     }
-
-  //     // Check if survey is already completed
-  //     const currentActivities = currentProgress?.completed_activities || {};
-  //     if (currentActivities['survey_pre_survey']) {
-  //       return { 
-  //         success: false, 
-  //         error: 'Survey already completed',
-  //         points: currentProgress?.progress || 0,
-  //         isAlreadyCompleted: true
-  //       };
-  //     }
-
-  //     let currentPoints = currentProgress?.progress || 0;
-  //     let newPoints = Math.min(currentPoints + POINT_SYSTEM.SURVEY.PRE_SURVEY_COMPLETION, 10);
-  //     let status = currentProgress?.status || 'ongoing';
-
-  //     // Update status if completed
-  //     if (newPoints >= 10 && status !== 'completed') {
-  //       status = 'completed';
-  //     }
-
-  //     // Update completed_activities
-  //     const updatedActivities = {
-  //       ...currentActivities,
-  //       'survey_pre_survey': true
-  //     };
-
-  //     // Use upsert to avoid data loss
-  //     const { error } = await supabase
-  //       .from('user_scenarios_progress')
-  //       .upsert({
-  //         user_id: userId,
-  //         scenario_id: scenarioId,
-  //         progress: newPoints,
-  //         status: status,
-  //         completed_activities: updatedActivities,
-  //         completed_at: status === 'completed' ? new Date().toISOString() : null,
-  //         updated_at: new Date().toISOString()
-  //       }, {
-  //         onConflict: 'user_id,scenario_id'
-  //       });
-
-  //     if (error) {
-  //       console.error('Error updating survey points:', error);
-  //       return { success: false, error: error.message };
-  //     }
-
-  //     return {
-  //       success: true,
-  //       points: newPoints,
-  //       status: status,
-  //       isCompleted: status === 'completed'
-  //     };
-  //   } catch (error) {
-  //     console.error('Error awarding survey points:', error);
-  //     return { success: false, error: error.message };
-  //   }
-  // };
 
   // Award points for vocabulary activities - UPDATED with new data structure
   export const awardVocabularyPoints = async (userId, scenarioId, activity, supabase) => {
