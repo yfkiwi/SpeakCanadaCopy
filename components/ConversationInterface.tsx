@@ -695,12 +695,6 @@ const ConversationInterface: React.FC<ConversationProps> = ({
                 totalMessages: messages.filter(m => m.role === 'user').length,
                 conversationLength: selectedSamples.length > 0 ? 
                   (selectedSamples[selectedSamples.length - 1].timestamp - selectedSamples[0].timestamp) / 1000 : 0,
-                breakdown: analysisData.breakdown || {
-                  pronunciation: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10)),
-                  fluency: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10)),
-                  grammar: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10)),
-                  vocabulary: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10))
-                }
               });
               setShowSlangLoader(false);
               setShowFeedbackModal(true);
@@ -738,12 +732,6 @@ const ConversationInterface: React.FC<ConversationProps> = ({
               totalMessages: messages.filter(m => m.role === 'user').length,
               conversationLength: selectedSamples.length > 0 ? 
                 (selectedSamples[selectedSamples.length - 1].timestamp - selectedSamples[0].timestamp) / 1000 : 0,
-              breakdown: analysisData.breakdown || {
-                pronunciation: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10)),
-                fluency: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10)),
-                grammar: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10)),
-                vocabulary: Math.round(Math.max(0, (analysisData.overallScore || 50) + Math.random() * 20 - 10))
-              }
             });
             setShowSlangLoader(false);
             setShowFeedbackModal(true);
@@ -767,12 +755,6 @@ const ConversationInterface: React.FC<ConversationProps> = ({
           totalMessages: messages.filter(m => m.role === 'user').length,
           conversationLength: selectedSamples.length > 0 ? 
             (selectedSamples[selectedSamples.length - 1].timestamp - selectedSamples[0].timestamp) / 1000 : 0,
-          breakdown: {
-            pronunciation: Math.round(Math.max(0, baseScore + Math.random() * 20 - 10)),
-            fluency: Math.round(Math.max(0, baseScore + Math.random() * 20 - 10)),
-            grammar: Math.round(Math.max(0, baseScore + Math.random() * 20 - 10)),
-            vocabulary: Math.round(Math.max(0, baseScore + Math.random() * 20 - 10))
-          }
         };
         
         setFeedbackData(fallbackFeedback);
@@ -800,38 +782,6 @@ const ConversationInterface: React.FC<ConversationProps> = ({
                 {feedbackData.samplesAnalyzed ? `Based on ${feedbackData.samplesAnalyzed} audio samples` : 'Overall Performance'}
               </div>
               
-              {/* Detailed breakdown */}
-              {feedbackData.breakdown && (
-                <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Detailed Analysis:</h3>
-                  <div className="space-y-2">
-                    {feedbackData.breakdown.pronunciation && (
-                      <div className="flex justify-between text-xs">
-                        <span>Pronunciation:</span>
-                        <span className="font-medium">{Math.round(feedbackData.breakdown.pronunciation)}/100</span>
-                      </div>
-                    )}
-                    {feedbackData.breakdown.fluency && (
-                      <div className="flex justify-between text-xs">
-                        <span>Fluency:</span>
-                        <span className="font-medium">{Math.round(feedbackData.breakdown.fluency)}/100</span>
-                      </div>
-                    )}
-                    {feedbackData.breakdown.grammar && (
-                      <div className="flex justify-between text-xs">
-                        <span>Grammar:</span>
-                        <span className="font-medium">{Math.round(feedbackData.breakdown.grammar)}/100</span>
-                      </div>
-                    )}
-                    {feedbackData.breakdown.vocabulary && (
-                      <div className="flex justify-between text-xs">
-                        <span>Vocabulary:</span>
-                        <span className="font-medium">{Math.round(feedbackData.breakdown.vocabulary)}/100</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           )}
           
@@ -848,7 +798,7 @@ const ConversationInterface: React.FC<ConversationProps> = ({
               }}
               className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 text-sm sm:text-base"
             >
-              Continue
+              Complete
             </button>
             <button
               onClick={() => {

@@ -136,10 +136,8 @@ export default function RoleplayPage() {
         console.log('💬 Roleplay conversation completed! Points:', result.points);
         setConversationCompleted(true);
         
-        // 延长等待时间，确保 Azure 分析完成
-        setTimeout(() => {
-          router.push(`/scenario/${id}`);
-        }, 5000); // 从 2 秒增加到 5 秒
+        // 完成后立即返回上一级菜单
+        router.push(`/scenario/${id}`);
       } else if (result.isAlreadyCompleted) {
         setConversationCompleted(true);
         alert('You have already completed this roleplay!');
